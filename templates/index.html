@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" style="height: 100%!important;">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accessplex</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+
+
+    <style>
+        body{
+            background-color: #003049;
+            color: #fff;
+            font-family: 'Helvetica Neue', sans-serif; font-size: 275px; font-weight: bold; letter-spacing: -1px; line-height: 1; text-align: center;
+        }
+        #interaccion {
+            position: relative;
+            height: 100vh;
+            /* Ajusta según sea necesario */
+        }
+
+        #punto {
+            position: absolute;
+            width: 2rem;
+            left: 100px;
+            /* Ajusta según sea necesario */
+            height: 2rem;
+            /* Ajusta según sea necesario */
+            background-color: red;
+            border-radius: 50%;
+        }
+
+        button{
+            background-color: #fff!important;
+            border: none!important;
+        }
+
+    </style>
+
+    <script>
+
+        $(document).ready(function () {
+            // Obtén el ancho del div con id 'miDiv' y envíalo al servidor
+
+
+            setTimeout(() => {
+                var botonSubir = document.getElementById('subir');
+                var botonBajar = document.getElementById('bajar');
+                var main = document.getElementById('interaccion');
+                var width = $('#interaccion').width();
+                var height = $('#interaccion').height();
+                var camera = $('#camera').height();
+                var alturaPantalla = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+                console.log(camera);
+                const h = alturaPantalla - camera - 100;
+                $(main).height(h + 'px');
+                $.ajax({
+                type: 'POST',
+                url: 'dimension',
+                data: {
+                    'height': height,
+                    'width': width
+                },
+                success: function (response) {
+                    console.log('Ancho enviado al servidor');
+                }
+            });
+            }, 1000)
+
+            
+            // main.style.height = 100 - camera - 2 + 'vh'
+            // botonSubir.style.height = 100 - camera - 15 + 'vh!'
+            // botonBajar.style.height = 100 - camera - 15 + 'vh'
+
+            
+
+            setTimeout(() => {
+                var socket = io('http://localhost:5000');
+                socket.emit('eye_movement', 'test')
+                // Escuchar actualizaciones de posición del punto desde el servidor
+                socket.on('test', function (data) {
+                    // Actualizar dinámicamente la posición del punto en el cliente
+                    var punto = document.getElementById('punto');
+                    punto.style.left = data.x + 'px';
+                    punto.style.top = data.y + 'px';
+                    socket.emit('eye_movement', 'to_activate')
+                });
+                var click = false;
+                socket.emit('eye_click', 'click')
+                // Escuchar actualizaciones de posición del punto desde el servidor
+                socket.on('click', function (data) {
+                    // Actualizar dinámicamente la posición del punto en el cliente
+                    if (!data) {
+                        click = false
+                        socket.emit('eye_click', false)
+                    } else {
+                        click = true
+                        setTimeout(() => {
+                            socket.emit('eye_click', true)
+                        }, 500);
+                        console.log('Aca hizo click');
+                    }
+                })
+            }, 1100)
+
+        });
+
+
+
+    </script>
+</head>
+
+<body style="height: 100%!important; margin: 0; padding: 1rem;">
+    <div class="d-flex" id="camera">
+        <img src="{{ url_for('video_feed') }}" alt="Video Feed" id="video-feed">
+        <h1 class="text-center w-100">Accessplex - Universidad Konrad Lorenz <br>
+            Pon tu cara lo más centrado posible en el cuadrado rojo</h1>
+    </div>
+    <div class="row">
+        <div class="col" id="interaccion">
+            <div id="punto"></div>
+            <div class="row h-100">
+                <div class="col-1">
+                    
+                </div>
+                <div class="col-2 text-center">
+                    <button class="btn btn-primary p-5 h-100 mt-3 w-100" id="subir">
+                        <img class="w-100" src="{{ url_for('static', filename='images/up.png') }}" alt="">
+                    </button>
+                </div>
+                
+                <div class="col-2 text-center">
+                    <button class="btn btn-primary p-5 h-100 mt-3 w-100" id="bajar">
+                        <img class="w-100" src="{{ url_for('static', filename='images/down.png') }}" alt="">
+                    </button>
+                </div>
+                 <div class="col-3">
+                    
+                 </div>
+
+                 <div class="col-2 text-center">
+                    <button class="btn btn-primary p-5 h-100 mt-3 w-100" id="bajar">
+                        <img class="w-100" src="{{ url_for('static', filename='images/down.png') }}" alt="">
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+
+</body>
+
+</html>
